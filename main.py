@@ -13,7 +13,20 @@ OUT_DIR = os.environ.get("MAKEFUN_OUTPUT_DIR") or (
 )
 
 
+def validate(text: str) -> None:
+    """Raise ValueError unless text is one non-empty sentence of <=200 chars."""
+    if not text or not text.strip():
+        raise ValueError("entry must not be empty")
+    if len(text) > 200:
+        raise ValueError("entry must be at most 200 characters")
+    if "\n" in text:
+        raise ValueError("entry must be one line")
+    if not text.endswith(".") or text.count(".") != 1:
+        raise ValueError("entry must be exactly one sentence ending with '.'")
+
+
 def main() -> None:
+    validate(LINE)
     os.makedirs(OUT_DIR, exist_ok=True)
     path = os.path.join(OUT_DIR, "entry.txt")
     tmp = path + ".tmp"
@@ -22,10 +35,9 @@ def main() -> None:
     os.replace(tmp, path)
     with open(path, encoding="utf-8") as f:
         written = f.read()
-    assert written == LINE, "entry.txt differs from LINE"
-    assert 1 <= len(written) <= 200 and written.strip(), "gate failed"
-    assert "\n" not in written, "entry must be one line"
-    assert written.count(".") == 1 and written.endswith("."), "must be one sentence"
+    if written != LINE:
+        raise ValueError("entry.txt differs from LINE after write")
+    validate(written)
 
 
 if __name__ == "__main__":
